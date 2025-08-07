@@ -1,97 +1,101 @@
-# dashboard.py (versão completa e corrigida)
-
 import pandas as pd
 import matplotlib
-# GARANTE QUE OS GRÁFICOS APARECERÃO AO RODAR O SCRIPT
-matplotlib.use('TkAgg') 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import seaborn as sns
-# Importa a configuração do arquivo .config na mesma pasta
-from .config import NOME_ARQUIVO_CSV
+from . import config
 
-# --- Funções de Lógica de Dados ---
+# Configura o backend do Matplotlib a partir do config
+matplotlib.use(config.MATPLOTLIB_BACKEND) 
+
 def carregar_dados():
     """Carrega e prepara os dados do CSV."""
     try:
-        df = pd.read_csv(NOME_ARQUIVO_CSV, sep=';', encoding='utf-8')
+        df = pd.read_csv(config.NOME_ARQUIVO_CSV, sep=';', encoding='utf-8')
         df['Data'] = pd.to_datetime(df['Data'])
         df['Rating'] = pd.to_numeric(df['Rating'])
-        print(f"✅ Arquivo carregado com sucesso de: {NOME_ARQUIVO_CSV}")
+        print(f"✅ Arquivo carregado com sucesso de: {config.NOME_ARQUIVO_CSV}")
         return df
     except FileNotFoundError:
-        print(f"❌ ERRO: Arquivo '{NOME_ARQUIVO_CSV}' não encontrado.")
+        print(f"❌ ERRO: Arquivo '{config.NOME_ARQUIVO_CSV}' não encontrado.")
         return None
 
-# --- Funções de Visualização (cada gráfico vira uma função) ---
 def plotar_kpis_gerais(df):
     """Imprime os KPIs gerais de satisfação e sentimento."""
     avg_rating = df['Rating'].mean()
-    # Verifica se a coluna 'Sentimento' existe antes de usar
     if 'Sentimento' in df.columns:
         sentiment_distribution = df['Sentimento'].value_counts(normalize=True) * 100
         print("\n[1. KPIs Gerais]")
         print(f"Índice de Satisfação Médio (Rating): {avg_rating:.2f} de 5")
         print("Distribuição de Sentimento:")
         print(sentiment_distribution.round(2).to_string())
-    else:
-        print("\n[1. KPIs Gerais]")
-        print(f"Índice de Satisfação Médio (Rating): {avg_rating:.2f} de 5")
-        print("Aviso: Coluna 'Sentimento' não encontrada para análise de distribuição.")
 
 def plotar_grafico_pareto(df):
     """Gera e exibe um gráfico de Pareto das reclamações."""
-    # Filtra por feedbacks negativos que tenham Subcategoria
     df_negativo = df[(df['Sentimento'] == 'Negativo') & (df['Subcategoria'].notna())].copy()
-    if df_negativo.empty:
-        print("Aviso: Nenhum feedback negativo com subcategoria para gerar o Gráfico de Pareto.")
-        return
+    if df_negativo.empty: return
 
     contagem_subcat = df_negativo['Subcategoria'].value_counts().reset_index()
     contagem_subcat.columns = ['Subcategoria', 'Contagem']
     contagem_subcat['Percentual_Acumulado'] = (contagem_subcat['Contagem'].cumsum() / contagem_subcat['Contagem'].sum()) * 100
-
-    fig, ax1 = plt.subplots(figsize=(15, 8))
-    # AQUI ESTÁ A LÓGICA DE DESENHO DO GRÁFICO DE BARRAS
+    
+    fig, ax1 = plt.subplots(figsize=config.FIGSIZE_GRANDE)
     ax1.bar(contagem_subcat['Subcategoria'], contagem_subcat['Contagem'], color='cornflowerblue')
     ax1.set_xlabel('Subcategoria do Problema', fontsize=12)
     ax1.set_ylabel('Número de Ocorrências', color='cornflowerblue', fontsize=12)
-    ax1.tick_params(axis='y', labelcolor='cornflowerblue')
     plt.xticks(rotation=45, ha="right")
 
     ax2 = ax1.twinx()
-    # AQUI ESTÁ A LÓGICA DE DESENHO DO GRÁFICO DE LINHA
     ax2.plot(contagem_subcat['Subcategoria'], contagem_subcat['Percentual_Acumulado'], color='crimson', marker='o', ms=5)
     ax2.set_ylabel('Percentual Acumulado (%)', color='crimson', fontsize=12)
-    ax2.tick_params(axis='y', labelcolor='crimson')
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=100.0))
-    ax2.set_ylim([0, 110])
-
+    
     plt.title('Gráfico de Pareto: Causas Principais de Reclamações', fontsize=16)
     fig.tight_layout()
-    plt.show() # Mostra o gráfico
+    plt.show()
 
-def plotar_mapa_calor(df):
-    """Gera e exibe um mapa de calor de problemas vs. lojas."""
-    df_negativo = df[(df['Sentimento'] == 'Negativo') & (df['Subcategoria'].notna())].copy()
-    if df_negativo.empty:
-        print("Aviso: Nenhum feedback negativo com subcategoria para gerar o Mapa de Calor.")
-        return
-        
-    crosstab_loja_problema = pd.crosstab(df_negativo['Local_Loja'], df_negativo['Subcategoria'])
+def plotar_rating_por_dia_semana(df):
+    """Gera um gráfico da média de rating por dia da semana."""
+    print("\nGerando Análise de Satisfação por Dia da Semana...")
+    df['Dia_Semana'] = df['Data'].dt.day_name()
     
-    plt.figure(figsize=(16, 9))
-    # AQUI ESTÁ A LÓGICA DE DESENHO DO MAPA DE CALOR
-    sns.heatmap(crosstab_loja_problema, annot=True, fmt='d', cmap='Reds', linewidths=.5)
-    plt.title('Mapa de Calor: Ocorrências de Problemas por Loja/Hotel', fontsize=16)
-    plt.xlabel('Subcategoria do Problema')
-    plt.ylabel('Loja / Hotel')
-    plt.xticks(rotation=30, ha="right")
-    plt.yticks(rotation=0)
-    plt.tight_layout()
-    plt.show() # Mostra o gráfico
+    rating_por_dia = df.groupby('Dia_Semana')['Rating'].mean().reindex(config.DIAS_SEMANA_ORDEM)
+    rating_por_dia.index = rating_por_dia.index.map(config.DIAS_SEMANA_PT)
+    
+    plt.figure(figsize=config.FIGSIZE_PADRAO)
+    rating_por_dia.plot(kind='line', marker='o', linestyle='--', color='indigo')
+    plt.title('Média de Satisfação por Dia da Semana', fontsize=16)
+    plt.xlabel('Dia da Semana'); plt.ylabel('Rating Médio (1-5)')
+    plt.ylim(1, 5); plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.tight_layout(); plt.show()
 
-# --- Bloco de Execução ---
+def calcular_e_exibir_health_score(df):
+    """Calcula e exibe um score de saúde ponderado para cada loja/hotel."""
+    print("\nCalculando Índice de Saúde da Loja/Hotel (Health Score)...")
+    
+    resultados = []
+    pesos = config.PESOS_HEALTH_SCORE
+
+    for loja in df['Local_Loja'].unique():
+        df_loja = df[df['Local_Loja'] == loja]
+        rating_norm = (df_loja['Rating'].mean() - 1) / 4
+        pct_negativo = (df_loja['Sentimento'] == 'Negativo').sum() / len(df_loja)
+        pct_urg_alta = (df_loja['Urgencia'] == 'Alta').sum() / len(df_loja)
+        
+        score = (pesos['rating'] * rating_norm) - (pesos['negativo'] * pct_negativo) - (pesos['urgencia'] * pct_urg_alta)
+        resultados.append({'Loja/Hotel': loja, 'Health_Score': score * 100})
+
+    health_scores = pd.DataFrame(resultados).sort_values(by='Health_Score', ascending=False).round(2)
+    
+    print("\n--- Índice de Saúde da Loja/Hotel (Health Score) ---")
+    print(health_scores.to_string(index=False))
+
+    plt.figure(figsize=config.FIGSIZE_GRANDE)
+    sns.barplot(data=health_scores, x='Health_Score', y='Loja/Hotel', palette=config.PALETA_HEALTH_SCORE, hue='Loja/Hotel', legend=False)
+    plt.title('Ranking de Saúde por Loja/Hotel', fontsize=16)
+    plt.xlabel('Health Score (quanto maior, melhor)'); plt.ylabel('Loja / Hotel')
+    plt.tight_layout(); plt.show()
+
 def main():
     """Função principal que orquestra a geração do dashboard."""
     print("--- INICIANDO GERAÇÃO DO DASHBOARD ---")
@@ -99,11 +103,9 @@ def main():
     
     if df is not None:
         plotar_kpis_gerais(df)
-        
-        # As funções de plotagem agora filtram os dados internamente
         plotar_grafico_pareto(df)
-        plotar_mapa_calor(df)
-        # ... outras funções de plotagem podem ser chamadas aqui
+        plotar_rating_por_dia_semana(df)
+        calcular_e_exibir_health_score(df)
 
 if __name__ == '__main__':
     main()

@@ -3,46 +3,29 @@ import uuid
 import os
 import pandas as pd
 from faker import Faker
-from .config import NOME_ARQUIVO_CSV, NOVOS_FEEDBACKS_HOTELARIA, NOVOS_FEEDBACKS_CONSTRUCAO
+from . import config
 
-# Inicializa o Faker para gerar dados em Português do Brasil
-faker = Faker('pt_BR')
+# Inicializa o Faker com a localidade definida no config
+faker = Faker(config.FAKER_LOCALE)
 
-# A função de lógica para gerar os dados permanece a mesma
 def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
-    """
-    Gera uma lista de feedbacks fictícios usando a biblioteca Faker.
-    """
+    """Gera uma lista de feedbacks fictícios usando parâmetros do config."""
     if setor not in ['hotelaria', 'material_construcao']:
         print(f"Alerta: Setor '{setor}' inválido. Ignorando.")
         return []
 
-    canais = ['Website', 'Aplicativo', 'Email', 'Totem na Loja', 'Telefone', 'Redes Sociais', 'Reclame Aqui']
-
-    textos_feedback = {
-        'hotelaria': {
-            'positivo': ["Estadia fantástica! A equipe, especialmente {nome}, foi extremamente atenciosa.", "Processo de check-in rápido. Adorei a vista do quarto e o conforto da cama no {local}.", "Excelente localização e instalações. A área da piscina é maravilhosa."],
-            'neutro': ["A estadia foi boa, mas o Wi-Fi no quarto era instável. O atendimento de {nome} na recepção foi ok.", "O hotel é bem localizado, porém o quarto era menor do que eu esperava."],
-            'negativo': ["Decepcionante. O ar condicionado do quarto não funcionava e o atendente {nome} não resolveu.", "A limpeza do banheiro deixou a desejar. Encontrei cabelos no ralo.", "Péssimo atendimento na recepção, o funcionário parecia totalmente perdido."]
-        },
-        'material_construcao': {
-            'positivo': ["Vendedor {nome} foi muito atencioso e com grande conhecimento, me ajudou a escolher o {produto} certo.", "Preços muito competitivos e a entrega foi realizada antes do prazo. Recomendo a loja {local}!", "Loja extremamente bem organizada, fácil encontrar os itens."],
-            'neutro': ["A loja tem boa variedade, mas tive dificuldade para conseguir ajuda de um vendedor no setor de {produto}s.", "Encontrei o que precisava, mas o preço do {produto} estava um pouco acima da média."],
-            'negativo': ["Péssimo atendimento. Esperei mais de 20 minutos e o vendedor {nome} não soube tirar minhas dúvidas sobre {produto}.", "A entrega do meu pedido de {produto} atrasou 5 dias e a loja não deu satisfação.", "Falta de estoque de {produto}. Anunciam no site, mas não tem na loja física."]
-        }
-    }
+    # Utiliza o dicionário de textos do config
+    textos_feedback = config.TEXTOS_FEEDBACK
     
     def gerar_nome_hotel():
-      sufixos = ['Palace', 'Resort', 'Plaza', 'Hotel', 'Inn', 'Comfort']
-      return f"Hotel {faker.last_name()} {random.choice(sufixos)}"
+      return f"Hotel {faker.last_name()} {random.choice(config.SUFIXOS_HOTEIS)}"
 
     def gerar_nome_loja_construcao():
-      prefixos = ['Constrói', 'Mega', 'Depósito', 'Center']
-      sufixos = ['Materiais', '& Cia', 'Tudo', 'Construção']
-      return f"{random.choice(prefixos)} {faker.word().capitalize()} {random.choice(sufixos)}"
+      prefixo = random.choice(config.PREFIXOS_LOJAS)
+      sufixo = random.choice(config.SUFIXOS_LOJAS)
+      return f"{prefixo} {faker.word().capitalize()} {sufixo}"
 
     feedbacks_gerados = []
-    lista_produtos = ['cimento', 'tijolos', 'porcelanato', 'tinta', 'argamassa', 'torneiras']
 
     for _ in range(n):
         rating = faker.random_int(min=1, max=5)
@@ -51,13 +34,17 @@ def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
         local_gerado = gerar_nome_hotel() if setor == 'hotelaria' else gerar_nome_loja_construcao()
         texto_template = random.choice(textos_feedback[setor][categoria_texto])
         
-        texto_final = texto_template.format(nome=faker.name(), local=local_gerado, produto=random.choice(lista_produtos))
+        texto_final = texto_template.format(
+            nome=faker.name(), 
+            local=local_gerado, 
+            produto=random.choice(config.LISTA_PRODUTOS_CONSTRUCAO)
+        )
 
         feedback = {
             'ID': str(uuid.uuid4()),
             'Setor': setor.replace('_', ' ').title(),
-            'Canal': random.choice(canais),
-            'Data': faker.date_time_between(start_date='-1y', end_date='now').strftime('%Y-%m-%d %H:%M:%S'),
+            'Canal': random.choice(config.CANAIS_FEEDBACK),
+            'Data': faker.date_time_between(start_date=config.FEEDBACK_START_DATE, end_date='now').strftime('%Y-%m-%d %H:%M:%S'),
             'Rating': rating,
             'Local_Loja': local_gerado,
             'Texto_Original': texto_final
@@ -67,27 +54,32 @@ def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
     return feedbacks_gerados
 
 
-# A lógica principal agora está nesta função, que pode ser importada e chamada por outros scripts
-def adicionar_novos_feedbacks():
+def adicionar_novos_feedbacks(num_hotel: int, num_construcao: int):
     """
-    Gera novos feedbacks para hotelaria e construção e os adiciona ao arquivo CSV.
+    Gera uma quantidade definida de feedbacks para cada setor e os adiciona ao arquivo CSV.
     """
-    print("Iniciando geração de novos feedbacks...")
+    print(f"Iniciando geração de {num_hotel} feedbacks de hotelaria e {num_construcao} de construção...")
 
-    feedbacks_hoteleiros = gerar_feedbacks_com_faker(NOVOS_FEEDBACKS_HOTELARIA, 'hotelaria')
-    feedbacks_construcao = gerar_feedbacks_com_faker(NOVOS_FEEDBACKS_CONSTRUCAO, 'material_construcao')
+    # Usa os parâmetros recebidos em vez dos valores do config
+    feedbacks_hoteleiros = gerar_feedbacks_com_faker(num_hotel, 'hotelaria')
+    feedbacks_construcao = gerar_feedbacks_com_faker(num_construcao, 'material_construcao')
 
     todos_novos_feedbacks = feedbacks_hoteleiros + feedbacks_construcao
+    
+    # Verifica se algum feedback foi realmente gerado
+    if not todos_novos_feedbacks:
+        print("Nenhum feedback foi gerado. Operação cancelada.")
+        return
+
     novos_feedbacks_df = pd.DataFrame(todos_novos_feedbacks)
 
     try:
-        # A lógica de anexar ao arquivo existente ou criar um novo foi mantida
-        if os.path.exists(NOME_ARQUIVO_CSV):
+        if os.path.exists(config.NOME_ARQUIVO_CSV):
             print(f"Adicionando {len(novos_feedbacks_df)} novos feedbacks ao arquivo existente...")
-            novos_feedbacks_df.to_csv(NOME_ARQUIVO_CSV, mode='a', index=False, sep=';', header=False, encoding='utf-8')
+            novos_feedbacks_df.to_csv(config.NOME_ARQUIVO_CSV, mode='a', index=False, sep=';', header=False, encoding='utf-8')
         else:
-            print(f"Arquivo '{NOME_ARQUIVO_CSV}' não encontrado. Criando novo arquivo...")
-            novos_feedbacks_df.to_csv(NOME_ARQUIVO_CSV, index=False, sep=';', encoding='utf-8')
+            print(f"Arquivo '{config.NOME_ARQUIVO_CSV}' não encontrado. Criando novo arquivo...")
+            novos_feedbacks_df.to_csv(config.NOME_ARQUIVO_CSV, index=False, sep=';', encoding='utf-8')
             
         print(f"\n✅ Sucesso! {len(novos_feedbacks_df)} novos feedbacks foram adicionados.")
     except Exception as e:
@@ -95,6 +87,10 @@ def adicionar_novos_feedbacks():
         print("Verifique se o arquivo não está aberto em outro programa.")
 
 
-# Bloco de execução principal, agora mais limpo
+# O bloco de execução principal agora usa os valores do config como padrão
 if __name__ == '__main__':
-    adicionar_novos_feedbacks()
+    # Isso permite que o script ainda seja executável de forma independente com valores padrão
+    adicionar_novos_feedbacks(
+        num_hotel=config.NOVOS_FEEDBACKS_HOTELARIA, 
+        num_construcao=config.NOVOS_FEEDBACKS_CONSTRUCAO
+    )
