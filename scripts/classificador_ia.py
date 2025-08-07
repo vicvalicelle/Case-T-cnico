@@ -4,22 +4,16 @@ import json
 import os
 from dotenv import load_dotenv
 import time
-from pathlib import Path
+from .config import NOME_ARQUIVO_ENV, NOME_ARQUIVO_CSV, MODELO_IA
 
 # --- Configurações ---
-NOME_ARQUIVO_ENV = 'chave.env' 
 load_dotenv(dotenv_path=NOME_ARQUIVO_ENV)
-
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-# Alterado para o nome do arquivo CSV
-NOME_ARQUIVO_CSV = Path(__file__).resolve().parent.parent / 'data' / 'feedbacks_gerados.csv'
-MODELO_IA = 'openrouter/horizon-beta' 
 
-
+# A função de chamada da API permanece a mesma
 def classificar_feedback_com_ia(texto_feedback: str, setor: str) -> dict | None:
     """
     Envia o texto de um feedback para a API da OpenRouter para classificação.
-    (Esta função permanece exatamente a mesma)
     """
     if not OPENROUTER_API_KEY:
         print(f"Erro: Chave de API da OpenRouter não encontrada. Verifique seu arquivo '{NOME_ARQUIVO_ENV}'")
@@ -74,77 +68,69 @@ def classificar_feedback_com_ia(texto_feedback: str, setor: str) -> dict | None:
         print(f"Erro: Formato da resposta da API inesperado. Resposta recebida:\n{response.text}")
         return None
 
-
-# --- BLOCO PRINCIPAL PARA PROCESSAR O ARQUIVO CSV (VERSÃO CORRIGIDA) ---
-if __name__ == '__main__':
+# A lógica principal de processamento do CSV agora está nesta função
+def classificar_feedbacks_pendentes():
+    """
+    Lê o arquivo CSV, encontra feedbacks pendentes, classifica-os com a IA e salva o arquivo.
+    """
     try:
         df = pd.read_csv(NOME_ARQUIVO_CSV, sep=';', encoding='utf-8')
     except FileNotFoundError:
         print(f"Erro: O arquivo '{NOME_ARQUIVO_CSV}' não foi encontrado.")
-        print("Por favor, execute o script 'gerador_csv.py' primeiro para criar o arquivo.")
-        exit()
+        return
     except Exception as e:
         print(f"Ocorreu um erro ao ler o arquivo CSV: {e}")
-        exit()
-
-    # CORREÇÃO 1: FutereWarning
-    # A maneira recomendada de preencher valores nulos, evitando o aviso.
+        return
+    
+    # Prepara a coluna 'Status' se não existir ou se tiver valores nulos
     if 'Status' not in df.columns:
         df['Status'] = 'Pendente'
     else:
-        # Substitui o método inplace=True
         df['Status'] = df['Status'].fillna('Pendente')
 
-    # Lista de colunas que a IA irá preencher
     colunas_ia = [
         'Sentimento', 'Sentiment_Score', 'Categoria', 'Subcategoria', 'Tags',
         'Menciona_Empregado', 'Urgencia', 'Palavras_Chave', 'Sugestao_Acao',
         'Rascunho_Resposta', 'Status'
     ]
-    # Garante que as colunas da IA existam no DataFrame.
+    # Garante que as colunas da IA existam no DataFrame
     for col in colunas_ia:
         if col not in df.columns:
             df[col] = pd.Series(dtype='object')
-
+            
     feedbacks_para_classificar = df[df['Status'] != 'Classificado'].copy()
 
     if feedbacks_para_classificar.empty:
         print("✅ Nenhum novo feedback para classificar.")
-    else:
-        print(f"🔎 Encontrados {len(feedbacks_para_classificar)} feedbacks para classificar...")
+        return
 
-        # CORREÇÃO 2: KeyError
-        # Verificamos se a coluna 'ID' realmente existe antes de começar
-        if 'ID' not in df.columns:
-            print("\n❌ ERRO CRÍTICO: A coluna 'ID' não foi encontrada no arquivo CSV.")
-            print("Por favor, delete o arquivo CSV existente e gere um novo com o script 'gerador_csv.py'.")
-            exit()
-            
-        for index, row in feedbacks_para_classificar.iterrows():
-            # Usamos row.get('ID', 'ID não encontrado') para evitar o erro caso a coluna
-            # ainda esteja faltando por algum motivo inesperado.
-            id_feedback = row.get('ID', 'ID não encontrado')
-            print(f"\n🧠 Processando feedback ID: {id_feedback}...")
+    print(f"🔎 Encontrados {len(feedbacks_para_classificar)} feedbacks para classificar...")
+    for index, row in feedbacks_para_classificar.iterrows():
+        id_feedback = row.get('ID', 'ID não encontrado')
+        print(f"\n🧠 Processando feedback ID: {id_feedback}...")
 
-            resultado_ia = classificar_feedback_com_ia(row['Texto_Original'], row['Setor'])
+        resultado_ia = classificar_feedback_com_ia(row['Texto_Original'], row['Setor'])
 
-            if resultado_ia:
-                for coluna in colunas_ia:
-                    valor = resultado_ia.get(coluna)
-                    if isinstance(valor, list):
-                        valor_processado = ", ".join(map(str, valor))
-                    else:
-                        valor_processado = valor
-                    df.loc[index, coluna] = valor_processado
-                
-                print(f"  -> ✅ Status: Classificado com sucesso!")
-            else:
-                print(f"  -> ❌ Status: Falha na classificação. Será tentado novamente na próxima execução.")
+        if resultado_ia:
+            for coluna in colunas_ia:
+                valor = resultado_ia.get(coluna)
+                if isinstance(valor, list):
+                    df.loc[index, coluna] = ", ".join(map(str, valor))
+                else:
+                    df.loc[index, coluna] = valor
+            print(f"  -> ✅ Status: Classificado com sucesso!")
+        else:
+            print(f"  -> ❌ Status: Falha na classificação. Será tentado novamente na próxima execução.")
+        
+        time.sleep(5)
 
-            time.sleep(5)
+    try:
+        df.to_csv(NOME_ARQUIVO_CSV, index=False, sep=';', encoding='utf-8')
+        print(f"\n💾 Planilha '{NOME_ARQUIVO_CSV}' atualizada com sucesso.")
+    except Exception as e:
+        print(f"\n❌ Erro ao salvar o CSV. Verifique se ele não está aberto. Erro: {e}")
 
-        try:
-            df.to_csv(NOME_ARQUIVO_CSV, index=False, sep=';', encoding='utf-8')
-            print(f"\n💾 Planilha '{NOME_ARQUIVO_CSV}' atualizada com sucesso.")
-        except Exception as e:
-            print(f"\n❌ Erro ao salvar o CSV. Verifique se ele não está aberto. Erro: {e}")
+
+# Bloco de execução principal, agora mais limpo
+if __name__ == '__main__':
+    classificar_feedbacks_pendentes()

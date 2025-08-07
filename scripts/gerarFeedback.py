@@ -2,17 +2,16 @@ import random
 import uuid
 import os
 import pandas as pd
-from datetime import datetime
 from faker import Faker
-from pathlib import Path
+from .config import NOME_ARQUIVO_CSV, NOVOS_FEEDBACKS_HOTELARIA, NOVOS_FEEDBACKS_CONSTRUCAO
 
 # Inicializa o Faker para gerar dados em Português do Brasil
 faker = Faker('pt_BR')
 
+# A função de lógica para gerar os dados permanece a mesma
 def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
     """
     Gera uma lista de feedbacks fictícios usando a biblioteca Faker.
-    (Esta função é a mesma da resposta anterior, sem modificações)
     """
     if setor not in ['hotelaria', 'material_construcao']:
         print(f"Alerta: Setor '{setor}' inválido. Ignorando.")
@@ -67,12 +66,12 @@ def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
 
     return feedbacks_gerados
 
-# --- BLOCO PRINCIPAL PARA GERAR E SALVAR EM CSV ---
-if __name__ == '__main__':
-    NOME_ARQUIVO_CSV = Path(__file__).resolve().parent.parent / 'data' / 'feedbacks_gerados.csv'
-    NOVOS_FEEDBACKS_HOTELARIA = 5
-    NOVOS_FEEDBACKS_CONSTRUCAO = 5
 
+# A lógica principal agora está nesta função, que pode ser importada e chamada por outros scripts
+def adicionar_novos_feedbacks():
+    """
+    Gera novos feedbacks para hotelaria e construção e os adiciona ao arquivo CSV.
+    """
     print("Iniciando geração de novos feedbacks...")
 
     feedbacks_hoteleiros = gerar_feedbacks_com_faker(NOVOS_FEEDBACKS_HOTELARIA, 'hotelaria')
@@ -81,24 +80,21 @@ if __name__ == '__main__':
     todos_novos_feedbacks = feedbacks_hoteleiros + feedbacks_construcao
     novos_feedbacks_df = pd.DataFrame(todos_novos_feedbacks)
 
-    if os.path.exists(NOME_ARQUIVO_CSV):
-        print(f"Arquivo '{NOME_ARQUIVO_CSV}' encontrado. Lendo dados existentes...")
-        df_existente = pd.read_csv(NOME_ARQUIVO_CSV, quotechar='"', encoding="utf-8", on_bad_lines='skip')
-        print("Adicionando novos feedbacks ao arquivo CSV...")
-        df_final = pd.concat([df_existente, novos_feedbacks_df], ignore_index=True)
-    else:
-        print(f"Arquivo '{NOME_ARQUIVO_CSV}' não encontrado. Criando um novo arquivo...")
-        df_final = novos_feedbacks_df
-
     try:
+        # A lógica de anexar ao arquivo existente ou criar um novo foi mantida
         if os.path.exists(NOME_ARQUIVO_CSV):
-            print(f"Arquivo '{NOME_ARQUIVO_CSV}' encontrado. Adicionando novos feedbacks ao final...")
-            novos_feedbacks_df.to_csv(NOME_ARQUIVO_CSV, mode='a', index=False, sep=';', header=False)
+            print(f"Adicionando {len(novos_feedbacks_df)} novos feedbacks ao arquivo existente...")
+            novos_feedbacks_df.to_csv(NOME_ARQUIVO_CSV, mode='a', index=False, sep=';', header=False, encoding='utf-8')
         else:
             print(f"Arquivo '{NOME_ARQUIVO_CSV}' não encontrado. Criando novo arquivo...")
-            novos_feedbacks_df.to_csv(NOME_ARQUIVO_CSV, index=False, sep=';')
+            novos_feedbacks_df.to_csv(NOME_ARQUIVO_CSV, index=False, sep=';', encoding='utf-8')
             
-        print(f"\nSucesso! {len(novos_feedbacks_df)} novos feedbacks foram adicionados em '{NOME_ARQUIVO_CSV}'.")
+        print(f"\n✅ Sucesso! {len(novos_feedbacks_df)} novos feedbacks foram adicionados.")
     except Exception as e:
-        print(f"\nOcorreu um erro ao salvar o arquivo: {e}")
+        print(f"\n❌ Ocorreu um erro ao salvar o arquivo: {e}")
         print("Verifique se o arquivo não está aberto em outro programa.")
+
+
+# Bloco de execução principal, agora mais limpo
+if __name__ == '__main__':
+    adicionar_novos_feedbacks()
