@@ -1,0 +1,17 @@
+# Para manipulação de dados (ler e escrever no arquivo CSV)
+pandas
+
+# Para criar o dashboard interativo (no seu arquivo app.py)
+streamlit
+
+# Para fazer as chamadas à API da OpenRouter (no classificador)
+requests
+
+# Para carregar a chave de API localmente do arquivo .env
+python-dotenv
+
+# Para gerar dados fictícios (nomes, datas, etc.)
+Faker
+
+# Para criar os gráficos interativos no dashboard
+plotly
