@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import time
 from . import config
 
-# --- Configurações ---
+# configurações
 load_dotenv(dotenv_path=config.NOME_ARQUIVO_ENV)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
@@ -16,7 +16,7 @@ def classificar_feedback_com_ia(texto_feedback: str, setor: str) -> dict | None:
         print(f"Erro: Chave de API da OpenRouter não encontrada. Verifique seu arquivo '{config.NOME_ARQUIVO_ENV}'")
         return None
     
-    # Monta o prompt usando o template e os dados do config
+    # prompt usando o template e os dados do config
     prompt = config.PROMPT_CLASSIFICADOR.format(setor=setor, texto_feedback=texto_feedback)
     
     try:
@@ -56,16 +56,18 @@ def classificar_feedbacks_pendentes():
         print(f"Erro: O arquivo '{config.NOME_ARQUIVO_CSV}' não foi encontrado.")
         return
     
+    # colunas necessárias existem
     if 'Status' not in df.columns:
         df['Status'] = 'Pendente'
     else:
         df['Status'] = df['Status'].fillna('Pendente')
 
-    # Garante que todas as colunas da IA existam no DataFrame
     for col in config.COLUNAS_IA:
         if col not in df.columns:
-            df[col] = pd.Series(dtype='object')
+            # para aceitar tipos mistos inicialmente
+            df[col] = pd.Series(dtype='object') 
             
+    # feedbacks que precisam de classificação
     feedbacks_para_classificar = df[df['Status'] != 'Classificado'].copy()
 
     if feedbacks_para_classificar.empty:
@@ -74,7 +76,7 @@ def classificar_feedbacks_pendentes():
 
     print(f"🔎 Encontrados {len(feedbacks_para_classificar)} feedbacks para classificar...")
     for index, row in feedbacks_para_classificar.iterrows():
-        id_feedback = row.get('ID', 'ID não encontrado')
+        id_feedback = row.get('ID', f'índice {index}')
         print(f"\n🧠 Processando feedback ID: {id_feedback}...")
 
         resultado_ia = classificar_feedback_com_ia(row['Texto_Original'], row['Setor'])
@@ -82,22 +84,34 @@ def classificar_feedbacks_pendentes():
         if resultado_ia:
             for coluna in config.COLUNAS_IA:
                 valor = resultado_ia.get(coluna)
+
+                # converter para número se for um texto que parece número
+                if isinstance(valor, str):
+                    try:
+                        valor = float(valor)
+                    except ValueError:
+                        pass # texto se não for um número
+                
+                # valor ao DataFrame
                 if isinstance(valor, list):
                     df.loc[index, coluna] = ", ".join(map(str, valor))
                 else:
                     df.loc[index, coluna] = valor
+            
+            # status para Classificado
+            df.loc[index, 'Status'] = 'Classificado'
             print(f"  -> ✅ Status: Classificado com sucesso!")
         else:
+            df.loc[index, 'Status'] = 'Falha na Classificação'
             print(f"  -> ❌ Status: Falha na classificação.")
         
         time.sleep(config.API_CALL_DELAY_SECONDS)
 
     try:
         df.to_csv(config.NOME_ARQUIVO_CSV, index=False, sep=';', encoding='utf-8')
-        print(f"\n💾 Planilha '{config.NOME_ARQUIVO_CSV.name}' atualizada com sucesso.")
+        print(f"\n💾 Planilha '{config.NOME_ARQUIVO_CSV}' atualizada com sucesso.")
     except Exception as e:
         print(f"\n❌ Erro ao salvar o CSV. Verifique se ele não está aberto. Erro: {e}")
-
 
 if __name__ == '__main__':
     classificar_feedbacks_pendentes()

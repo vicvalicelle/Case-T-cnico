@@ -1,29 +1,24 @@
 from pathlib import Path
 
-# ===================================================================
 # 1. CONFIGURAÇÕES GERAIS E DE CAMINHOS
-# ===================================================================
 DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 NOME_ARQUIVO_CSV = DATA_DIR / 'feedbacks_gerados.csv'
 NOME_ARQUIVO_ENV = Path(__file__).resolve().parent.parent / 'chave.env'
 
-# ===================================================================
 # 2. CONFIGURAÇÕES DO GERADOR DE FEEDBACK (gerarFeedback.py)
-# ===================================================================
 NOVOS_FEEDBACKS_HOTELARIA = 5
 NOVOS_FEEDBACKS_CONSTRUCAO = 5
 FAKER_LOCALE = 'pt_BR'
-FEEDBACK_START_DATE = '-1y' # Intervalo de data para geração
+FEEDBACK_START_DATE = '-1y' # data para geração
 
-# -- Listas de Conteúdo para Geração --
+# Listas de Conteúdo para Geração
 CANAIS_FEEDBACK = ['Website', 'Aplicativo', 'Email', 'Totem na Loja', 'Telefone', 'Redes Sociais', 'Reclame Aqui']
 LISTA_PRODUTOS_CONSTRUCAO = ['cimento', 'tijolos', 'porcelanato', 'tinta', 'argamassa', 'torneiras']
 PREFIXOS_LOJAS = ['Constrói', 'Mega', 'Depósito', 'Center']
 SUFIXOS_LOJAS = ['Materiais', '& Cia', 'Tudo', 'Construção']
 SUFIXOS_HOTEIS = ['Palace', 'Resort', 'Plaza', 'Hotel', 'Inn', 'Comfort']
 
-# -- Templates de Texto para Geração --
-# Mover este grande dicionário limpa muito o código principal
+# Templates de Texto para Geração 
 TEXTOS_FEEDBACK = {
     'hotelaria': {
         'positivo': ["Estadia fantástica! A equipe, especialmente {nome}, foi extremamente atenciosa.", "Processo de check-in rápido. Adorei a vista do quarto e o conforto da cama no {local}.", "Excelente localização e instalações. A área da piscina é maravilhosa."],
@@ -37,23 +32,20 @@ TEXTOS_FEEDBACK = {
     }
 }
 
-# ===================================================================
 # 3. CONFIGURAÇÕES DA IA (classificador_ia.py)
-# ===================================================================
-# -- Parâmetros da API --
+# Parâmetros da API 
 MODELO_IA = 'z-ai/glm-4.5-air:free'
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 IA_TEMPERATURE = 0.2
 API_CALL_DELAY_SECONDS = 5
 
-# -- Estrutura e Prompt da IA --
+# Estrutura e Prompt da IA
 COLUNAS_IA = [
     'Sentimento', 'Sentiment_Score', 'Categoria', 'Subcategoria', 'Tags',
     'Menciona_Empregado', 'Urgencia', 'Palavras_Chave', 'Sugestao_Acao',
     'Rascunho_Resposta', 'Status'
 ]
 
-# Mover o prompt para cá torna a função principal muito mais legível
 PROMPT_CLASSIFICADOR = """
 Você é um especialista em análise de feedback de clientes. Sua tarefa é analisar o feedback abaixo, que pertence ao setor de "{setor}".
 Com base no texto, preencha os campos a seguir com precisão.
@@ -76,21 +68,19 @@ Sua resposta DEVE ser um único e válido objeto JSON, sem nenhum texto adiciona
 }}
 """
 
-# ===================================================================
 # 4. CONFIGURAÇÕES DO DASHBOARD (dashboard.py)
-# ===================================================================
-# -- Estilo dos Gráficos --
+# Estilo dos Gráficos
 MATPLOTLIB_BACKEND = 'TkAgg'
 FIGSIZE_PADRAO = (12, 6)
 FIGSIZE_GRANDE = (16, 9)
 PALETA_PROBLEMAS_CANAL = 'plasma'
 PALETA_HEALTH_SCORE = 'viridis_r'
 
-# -- Mapeamentos e Ordenações --
+# Mapeamentos e Ordenações
 DIAS_SEMANA_ORDEM = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 DIAS_SEMANA_PT = {'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta', 'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}
 
-# -- Pesos para Métricas --
+# Pesos para Métricas
 PESOS_HEALTH_SCORE = {
     'rating': 0.5,
     'negativo': 0.3,

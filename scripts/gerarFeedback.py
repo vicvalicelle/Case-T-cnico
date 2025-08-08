@@ -5,7 +5,7 @@ import pandas as pd
 from faker import Faker
 from . import config
 
-# Inicializa o Faker com a localidade definida no config
+# inicializa o faker com a localidade definida no config
 faker = Faker(config.FAKER_LOCALE)
 
 def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
@@ -14,7 +14,7 @@ def gerar_feedbacks_com_faker(n: int, setor: str) -> list:
         print(f"Alerta: Setor '{setor}' inválido. Ignorando.")
         return []
 
-    # Utiliza o dicionário de textos do config
+    # dicionário de textos do config
     textos_feedback = config.TEXTOS_FEEDBACK
     
     def gerar_nome_hotel():
@@ -60,13 +60,13 @@ def adicionar_novos_feedbacks(num_hotel: int, num_construcao: int):
     """
     print(f"Iniciando geração de {num_hotel} feedbacks de hotelaria e {num_construcao} de construção...")
 
-    # Usa os parâmetros recebidos em vez dos valores do config
+    # parâmetros recebidos em vez dos valores do config
     feedbacks_hoteleiros = gerar_feedbacks_com_faker(num_hotel, 'hotelaria')
     feedbacks_construcao = gerar_feedbacks_com_faker(num_construcao, 'material_construcao')
 
     todos_novos_feedbacks = feedbacks_hoteleiros + feedbacks_construcao
     
-    # Verifica se algum feedback foi realmente gerado
+    # se feedback foi realmente gerado
     if not todos_novos_feedbacks:
         print("Nenhum feedback foi gerado. Operação cancelada.")
         return
@@ -87,9 +87,7 @@ def adicionar_novos_feedbacks(num_hotel: int, num_construcao: int):
         print("Verifique se o arquivo não está aberto em outro programa.")
 
 
-# O bloco de execução principal agora usa os valores do config como padrão
 if __name__ == '__main__':
-    # Isso permite que o script ainda seja executável de forma independente com valores padrão
     adicionar_novos_feedbacks(
         num_hotel=config.NOVOS_FEEDBACKS_HOTELARIA, 
         num_construcao=config.NOVOS_FEEDBACKS_CONSTRUCAO
