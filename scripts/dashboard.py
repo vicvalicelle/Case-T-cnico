@@ -151,7 +151,6 @@ def criar_quadro_honra(df):
     quadro_honra['Rating_Medio'] = quadro_honra['Rating_Medio'].round(2)
     return quadro_honra
 
-# --- Bloco de Execução ---
 def main():
     """Função principal que orquestra a geração do dashboard no modo script."""
     print("--- INICIANDO GERAÇÃO DO DASHBOARD (MODO SCRIPT) ---")
@@ -171,18 +170,31 @@ def main():
         if fortes_df is not None:
             print(fortes_df.to_string(index=False))
 
-        health_scores_df, _ = calcular_e_exibir_health_score(df)
+        # Corrigido para capturar a figura do health score
+        health_scores_df, fig_health_score = calcular_e_exibir_health_score(df) 
         print("\n--- Índice de Saúde da Loja/Hotel ---")
         if health_scores_df is not None:
             print(health_scores_df.to_string(index=False))
         
         # Nota: os gráficos serão exibidos em janelas separadas devido ao 'plt.show()' implícito ao rodar o script
         print("\nGerando gráficos... (feche cada janela de gráfico para continuar)")
+        
         fig_pareto = plotar_grafico_pareto(df)
         if fig_pareto: plt.show()
         
         fig_mapa = plotar_mapa_calor(df)
         if fig_mapa: plt.show()
+
+        # ADICIONADO: Chamada para o gráfico de Health Score
+        if fig_health_score: plt.show()
+        
+        # ADICIONADO: Chamada para o gráfico de satisfação por dia da semana
+        fig_semana = plotar_rating_por_dia_semana(df)
+        if fig_semana: plt.show()
+
+        # ADICIONADO: Chamada para o gráfico de problemas por canal
+        fig_canal = plotar_problemas_por_canal(df)
+        if fig_canal: plt.show()
 
 
 if __name__ == '__main__':

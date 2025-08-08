@@ -82,18 +82,18 @@ else:
     with tab_geral:
         st.header("O Pulso do Negócio")
         
-        # Exibe os KPIs principais em colunas
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total de Feedbacks Analisados", f"{len(df_filtrado):,}")
-        col2.metric("Rating Médio Geral", f"{df_filtrado['Rating'].mean():.2f} ⭐")
-        col3.metric("Feedbacks Negativos", f"{(df_filtrado['Sentimento'] == 'Negativo').sum():,}")
-
-        st.divider()
-
-        st.subheader("Índice de Saúde por Loja/Hotel")
         if not df_filtrado.empty:
+            # Exibe os KPIs principais em colunas
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total de Feedbacks Analisados", f"{len(df_filtrado):,}")
+            col2.metric("Rating Médio Geral", f"{df_filtrado['Rating'].mean():.2f} ⭐")
+            col3.metric("Feedbacks Negativos", f"{(df_filtrado['Sentimento'] == 'Negativo').sum():,}")
+
+            st.divider()
+
+            st.subheader("Índice de Saúde por Loja/Hotel")
             health_scores_df, fig_health_score = calcular_e_exibir_health_score(df_filtrado)
-            if health_scores_df is not None:
+            if health_scores_df is not None and fig_health_score is not None:
                 # Exibe a tabela e o gráfico lado a lado
                 col_tabela, col_grafico = st.columns([1, 2])
                 with col_tabela:
@@ -102,6 +102,17 @@ else:
                     st.pyplot(fig_health_score)
             else:
                 st.warning("Não há dados suficientes nos filtros selecionados para calcular o Health Score (cada loja precisa de pelo menos 3 feedbacks).")
+
+            # --- ADICIONADO: Gráfico de satisfação por dia da semana ---
+            st.divider()
+            st.subheader("Variação da Satisfação Durante a Semana")
+            fig_semana = plotar_rating_por_dia_semana(df_filtrado)
+            if fig_semana:
+                st.pyplot(fig_semana)
+            else:
+                st.info("Não há dados suficientes para exibir o gráfico de satisfação semanal.")
+            # --- FIM DA ADIÇÃO ---
+
         else:
             st.warning("Nenhum dado encontrado para os filtros selecionados.")
 
@@ -111,15 +122,25 @@ else:
         st.markdown("Identifique as principais causas de insatisfação para focar os esforços de melhoria onde realmente importa.")
 
         if not df_filtrado[df_filtrado['Sentimento'] == 'Negativo'].empty:
+            # Gráfico de Pareto
             fig_pareto = plotar_grafico_pareto(df_filtrado)
             if fig_pareto:
                 st.subheader("Gráfico de Pareto das Reclamações")
                 st.pyplot(fig_pareto)
             
+            # Mapa de Calor
             fig_calor = plotar_mapa_calor(df_filtrado)
             if fig_calor:
                 st.subheader("Mapa de Calor (Loja vs. Problema)")
                 st.pyplot(fig_calor)
+
+            # --- ADICIONADO: Gráfico de problemas por canal ---
+            fig_canal = plotar_problemas_por_canal(df_filtrado)
+            if fig_canal:
+                st.subheader("Perfil de Problemas por Canal de Comunicação")
+                st.pyplot(fig_canal)
+            # --- FIM DA ADIÇÃO ---
+            
         else:
             st.info("Ótima notícia! Nenhum feedback negativo encontrado para os filtros selecionados.")
             
@@ -127,23 +148,27 @@ else:
     with tab_fortes:
         st.header("Identificando o que Funciona para Replicar o Sucesso")
         
-        col_elogios, col_quadro = st.columns(2)
+        if not df_filtrado[df_filtrado['Sentimento'] == 'Positivo'].empty:
+            col_elogios, col_quadro = st.columns(2)
 
-        with col_elogios:
-            st.subheader("Principais Motivos de Elogio")
-            df_fortes = analisar_pontos_fortes(df_filtrado)
-            if df_fortes is not None:
-                st.dataframe(df_fortes, hide_index=True, use_container_width=True)
-            else:
-                st.info("Não há feedbacks positivos com subcategoria para analisar.")
+            with col_elogios:
+                st.subheader("Principais Motivos de Elogio")
+                df_fortes = analisar_pontos_fortes(df_filtrado)
+                if df_fortes is not None:
+                    st.dataframe(df_fortes, hide_index=True, use_container_width=True)
+                else:
+                    st.info("Não há feedbacks positivos com subcategoria para analisar.")
 
-        with col_quadro:
-            st.subheader("Quadro de Honra dos Funcionários")
-            df_quadro_honra = criar_quadro_honra(df_filtrado)
-            if df_quadro_honra is not None:
-                st.dataframe(df_quadro_honra, hide_index=True, use_container_width=True)
-            else:
-                st.info("Nenhum funcionário foi elogiado nos feedbacks filtrados.")
+            with col_quadro:
+                st.subheader("Quadro de Honra dos Funcionários")
+                df_quadro_honra = criar_quadro_honra(df_filtrado)
+                if df_quadro_honra is not None:
+                    st.dataframe(df_quadro_honra, hide_index=True, use_container_width=True)
+                else:
+                    st.info("Nenhum funcionário foi elogiado nos feedbacks filtrados.")
+        else:
+            st.info("Nenhum feedback positivo encontrado para os filtros selecionados.")
+
 
     # --- Conteúdo da Aba 4: Demo da IA ---
     with tab_ia:
