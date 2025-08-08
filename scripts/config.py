@@ -4,6 +4,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 NOME_ARQUIVO_CSV = DATA_DIR / 'feedbacks_gerados.csv'
 NOME_ARQUIVO_ENV = Path(__file__).resolve().parent.parent / 'chave.env'
+PASTA_GRAFICOS = 'relatorio_de_analise'
 
 # 2. CONFIGURAÇÕES DO GERADOR DE FEEDBACK (gerarFeedback.py)
 NOVOS_FEEDBACKS_HOTELARIA = 5
@@ -68,21 +69,45 @@ Sua resposta DEVE ser um único e válido objeto JSON, sem nenhum texto adiciona
 }}
 """
 
-# 4. CONFIGURAÇÕES DO DASHBOARD (dashboard.py)
-# Estilo dos Gráficos
-MATPLOTLIB_BACKEND = 'TkAgg'
-FIGSIZE_PADRAO = (12, 6)
-FIGSIZE_GRANDE = (16, 9)
-PALETA_PROBLEMAS_CANAL = 'plasma'
-PALETA_HEALTH_SCORE = 'viridis_r'
-
-# Mapeamentos e Ordenações
-DIAS_SEMANA_ORDEM = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-DIAS_SEMANA_PT = {'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta', 'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}
-
+# 4. CONFIGURAÇÕES DO DASHBOARD (analise.py)
 # Pesos para Métricas
 PESOS_HEALTH_SCORE = {
     'rating': 0.5,
     'negativo': 0.3,
     'urgencia': 0.2
 }
+
+# CONSTANTES DO DATAFRAME
+class COLS:
+    """Centraliza os nomes de todas as colunas importantes."""
+    DATA = 'Data'
+    RATING = 'Rating'
+    SENTIMENTO = 'Sentimento'
+    CATEGORIA = 'Categoria'
+    SUBCATEGORIA = 'Subcategoria'
+    URGENCIA = 'Urgencia'
+    LOCAL = 'Local_Loja'
+    CANAL = 'Canal'
+    TEXTO = 'Texto_Original'
+    FUNCIONARIO = 'Menciona_Empregado'
+    ID = 'ID'
+
+class SENTIMENTS:
+    """Valores possíveis para a coluna de sentimento."""
+    POS = 'Positivo'
+    NEG = 'Negativo'
+    NEUTRO = 'Neutro'
+    
+class URGENCIA:
+    """Valores possíveis para a coluna de urgência."""
+    ALTA = 'Alta'
+    MEDIA = 'Média'
+    BAIXA = 'Baixa'
+
+# CONFIGURAÇÕES DE PLOTAGEM 
+FIGSIZE_PADRAO = (10, 6)
+FIGSIZE_GRANDE = (12, 8)
+PALETA_HEALTH_SCORE = 'coolwarm_r'
+PALETA_PROBLEMAS_CANAL = 'viridis'
+DIAS_SEMANA_ORDEM = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+DIAS_SEMANA_PT = {'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta', 'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}

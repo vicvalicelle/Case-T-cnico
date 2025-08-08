@@ -88,10 +88,10 @@ Para usar serviços externos como a OpenRouter de forma segura, nunca exponha su
     python nome_do_script_classificador.py
     ```
 
-**C. Dashboard Interativo:**
+**C. Analise e Dashboard Interativo:**
 
   * **Função:** Visualizar os dados e as análises de forma interativa.
-  * **Bibliotecas Principais:** `streamlit`, `pandas`, `plotly`.
+  * **Bibliotecas Principais:** `streamlit`, `pandas`, `plotly`, `sklearn`.
   * **Como Rodar:** Use o comando específico do Streamlit.
     ```bash
     streamlit run nome_do_script_dashboard.py
