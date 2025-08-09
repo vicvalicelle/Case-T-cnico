@@ -69,32 +69,7 @@ Continuar apenas com IA Generativa para todas as tarefas em produção é podero
 | **Rollout e Treinamento** | 2 semanas | Lançamento oficial, capacitação da equipe |
 | **Total** | **3 meses** | Do planejamento ao Go-Live |
 
-### **4. Análise Financeira e ROI**
-
-#### **4.1. Precificação Proposta**
-
-* **Setup Inicial:** R$ 25.000 a R$ 40.000
-* **Plano Business (10k feedbacks/mês):** R$ 4.000/mês
-* **Plano Enterprise (ilimitado):** R$ 7.500/mês
-
-**Investimento Anual (Enterprise):**
-R$ 40.000 + (R$ 7.500 × 12) = **R$ 130.000**
-
-#### **4.2. Estimativa de Retorno (ROI)**
-*Cenário: Rede de varejo com receita de R$ 100 milhões/ano.*
-
-| Métrica de Valor | Estimativa Conservadora |
-| :--- | :--- |
-| **Redução de churn em 1%** | R$ 1.000.000 |
-| **Economia com trabalho manual** (90% de 200h/mês a R$50/h) | R$ 108.000 |
-| **Investimento evitado por insights** (ex: R$ 200 mil mal direcionados) | R$ 200.000 |
-| **Valor Total Gerado no Ano 1** | **R$ 1.308.000** |
-| **Investimento na Plataforma** | **(R$ 130.000)** |
-| **ROI (Retorno sobre o Investimento)** | **906%** |
-
-*Conclusão do ROI: Para cada R$ 1 investido, a empresa tem um retorno estimado de R$ 9,06 no primeiro ano.*
-
-### **5. Conclusão e Próximos Passos**
+### **4. Conclusão e Próximos Passos**
 
 O protótipo demonstrou o que é possível. Esta proposta detalha o que é necessário para transformar essa possibilidade em um motor de crescimento e eficiência para o seu negócio. A arquitetura híbrida de IA, a infraestrutura de dados escalável e o foco incansável em gerar valor mensurável garantem que este projeto se pague múltiplas vezes.
 
